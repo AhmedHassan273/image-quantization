@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -11,6 +12,14 @@ namespace ImageQuantization
     public struct RGBPixel
     {
         public byte red, green, blue;
+        public double point;
+
+        public void RGBPixelConstructor(byte R, byte G, byte B)
+        {
+            red = R;
+            green = G;
+            blue = B;
+        }
     }
     /// <summary>
     /// Library of static functions that deal with images
@@ -71,7 +80,10 @@ namespace ImageQuantization
                             Buffer[y, x].green = p[1];
                             Buffer[y, x].blue = p[2];
                             if (Format24) p += 3;
-                            else if (Format32) p += 4;
+                            else if (Format32)
+                            {
+                                p += 4;
+                            }
                         }
                     }
                     p += nOffset;
@@ -89,7 +101,15 @@ namespace ImageQuantization
         /// <returns>Image Height</returns>
         public static int GetHeight(RGBPixel[,] ImageMatrix)
         {
-            return ImageMatrix.GetLength(0);
+            try
+            {
+                return ImageMatrix.GetLength(0);
+            }
+            catch
+            {
+                MessageBox.Show("No Image were added.");
+                return 0;
+            }
         }
 
         /// <summary>
@@ -99,7 +119,15 @@ namespace ImageQuantization
         /// <returns>Image Width</returns>
         public static int GetWidth(RGBPixel[,] ImageMatrix)
         {
-            return ImageMatrix.GetLength(1);
+            try
+            {
+                return ImageMatrix.GetLength(1);
+            }
+            catch
+            {
+                MessageBox.Show("No Image were added.");
+                return 0;
+            }
         }
 
         /// <summary>
@@ -111,66 +139,161 @@ namespace ImageQuantization
         {
             // Create Image:
             //==============
-            int Height = ImageMatrix.GetLength(0);
-            int Width = ImageMatrix.GetLength(1);
-
-            Bitmap ImageBMP = new Bitmap(Width, Height, PixelFormat.Format24bppRgb);
-
-            unsafe
+            try
             {
-                BitmapData bmd = ImageBMP.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadWrite, ImageBMP.PixelFormat);
-                int nWidth = 0;
-                nWidth = Width * 3;
-                int nOffset = bmd.Stride - nWidth;
-                byte* p = (byte*)bmd.Scan0;
-                for (int i = 0; i < Height; i++)
-                {
-                    for (int j = 0; j < Width; j++)
-                    {
-                        p[0] = ImageMatrix[i, j].red;
-                        p[1] = ImageMatrix[i, j].green;
-                        p[2] = ImageMatrix[i, j].blue;
-                        p += 3;
-                    }
+                int Height = ImageMatrix.GetLength(0);
+                int Width = ImageMatrix.GetLength(1);
 
-                    p += nOffset;
+                Bitmap ImageBMP = new Bitmap(Width, Height, PixelFormat.Format24bppRgb);
+
+                unsafe
+                {
+                    BitmapData bmd = ImageBMP.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadWrite, ImageBMP.PixelFormat);
+                    int nWidth = 0;
+                    nWidth = Width * 3;
+                    int nOffset = bmd.Stride - nWidth;
+                    byte* p = (byte*)bmd.Scan0;
+                    for (int i = 0; i < Height; i++)
+                    {
+                        for (int j = 0; j < Width; j++)
+                        {
+                            p[0] = ImageMatrix[i, j].red;
+                            p[1] = ImageMatrix[i, j].green;
+                            p[2] = ImageMatrix[i, j].blue;
+                            p += 3;
+                        }
+
+                        p += nOffset;
+                    }
+                    ImageBMP.UnlockBits(bmd);
                 }
-                ImageBMP.UnlockBits(bmd);
+                PicBox.Image = ImageBMP;
             }
-            PicBox.Image = ImageBMP;
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
 
+        /// <summary>
+        /// Image Charactaristics
+        /// </summary>
         private static bool[,,] Distinct;
         private static List<RGBPixel> UniqueColors;
+        private static AdjacencyList Graph;
+        private static List<List<RGBPixel>> Clusters;
+
         /// <summary>
-        /// Apply Gaussian smoothing filter to enhance the edge detection 
+        /// Finds All Pixels With Unique Colors and returns a List of Pixels
         /// </summary>
-        /// <param name="ImageMatrix">Colored image matrix</param>
-        /// <param name="filterSize">Gaussian mask size</param>
-        /// <param name="sigma">Gaussian sigma</param>
-        /// <returns>smoothed color image</returns>
-        public static RGBPixel[,] DistinctColors(RGBPixel[,] ImageMatrix)
+        public static void DistinctColors(RGBPixel[,] ImageMatrix)
         {
-            int Height = GetHeight(ImageMatrix);
-            int Width = GetWidth(ImageMatrix);
-            Distinct = new bool[257, 257, 257];
-            UniqueColors = new List<RGBPixel>();
-            for (int i = 0; i < Height; i++)
+            try
             {
-                for (int j = 0; j < Width; j++)
+                long Height = GetHeight(ImageMatrix);
+                long Width = GetWidth(ImageMatrix);
+                long length = 0;
+                Distinct = new bool[257, 257, 257];
+                UniqueColors = new List<RGBPixel>();
+                for (long i = 0; i < Height; i++)
                 {
-                    long X = ImageMatrix[i, j].red;
-                    int Y = ImageMatrix[i, j].green;
-                    int Z = ImageMatrix[i, j].blue;
-                    if (Distinct[X, Y, Z] == false)
+                    for (long j = 0; j < Width; j++)
                     {
-                        Distinct[X, Y, Z] = true;
-                        UniqueColors.Add(ImageMatrix[i, j]);
+                        int R = ImageMatrix[i, j].red;
+                        int B = ImageMatrix[i, j].blue;
+                        int G = ImageMatrix[i, j].green;
+                        if (Distinct[R, G, B] == false)
+                        {
+                            UniqueColors.Add(ImageMatrix[i, j]);
+                            length++;
+                            Distinct[R, G, B] = true;
+                        }
                     }
                 }
+                CompleteGraph(UniqueColors, length);
             }
-            MessageBox.Show(UniqueColors.Count.ToString());
-            return ImageMatrix;
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            return;
+        }
+
+
+
+        /// <summary>
+        /// Construct the Minimum Spanning Tree
+        /// </summary>
+        public static AdjacencyList CompleteGraph(List<RGBPixel> Verticies, long Number_of_verticies)
+        {
+            try
+            {
+                Distinct = new bool[256, 256, 256];
+                Graph = new AdjacencyList();
+                for (int i = 0; i < Number_of_verticies; i++)
+                {
+                    RGBPixel V1 = Verticies[i];
+                    byte R1 = V1.red;
+                    byte G1 = V1.green;
+                    byte B1 = V1.blue;
+
+                    byte VisitedNodeR = 0;
+                    byte VisitedNodeG = 0;
+                    byte VisitedNodeB = 0;
+                    double Minimum_weight = 1000000000000;
+                    for (int j = 0; j < Number_of_verticies; j++)
+                    {
+                        if(i == j)
+                        {
+                            continue;
+                        }
+                        RGBPixel Tmp2 = Verticies[j];
+
+                        byte R2 = Tmp2.red;
+                        byte G2 = Tmp2.green;
+                        byte B2 = Tmp2.blue;
+
+                        double W1 = (R1 - R2) * (R1 - R2) + (B1 - B2) * (B1 - B2) + (G1 - G2) * (G1 - G2);
+                        W1 = Math.Sqrt(W1);
+                        if (Distinct[R2, G2, B2] == false)
+                        {
+                            if (W1 < Minimum_weight)
+                            {
+                                Minimum_weight = W1;
+                                VisitedNodeR = R2;
+                                VisitedNodeG = G2;
+                                VisitedNodeB = B2;
+                            }
+                        }
+                    }
+                    RGBPixel V2 = new RGBPixel();
+                    V2.RGBPixelConstructor(VisitedNodeR, VisitedNodeG, VisitedNodeB);
+                    Graph.Add_Edge(V1, V2, Minimum_weight);
+                    Distinct[R1, G1, B1] = true;
+                    MessageBox.Show("[" + V1.red.ToString() + "," + V1.green.ToString() + "," + V1.blue.ToString() + "]" + "--" + Minimum_weight.ToString() + "-->" + "[" + V2.red.ToString() + "," + V2.green.ToString() + "," + V2.blue.ToString() + "]", "Edge Created ^_^*");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            return Graph;
+        }
+
+        /// <summary>
+        /// Find The K Clusters for a given minimum spanning tree
+        /// </summary>
+        public static List<List<RGBPixel>> KmeasnCluster(AdjacencyList MST,List<RGBPixel> Colors,int length, int k)
+        {
+            try
+            {
+                // here :"D 
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+            return new List<List<RGBPixel>>();
         }
     }
 }

@@ -15,7 +15,7 @@ namespace ImageQuantization
             InitializeComponent();
         }
 
-        RGBPixel[,] ImageMatrix;
+        RGBPixel[,] MyImageMatrix;
 
         private void btnOpen_Click(object sender, EventArgs e)
         {
@@ -24,22 +24,21 @@ namespace ImageQuantization
             {
                 //Open the browsed image and display it
                 string OpenedFilePath = openFileDialog1.FileName;
-                ImageMatrix = ImageOperations.OpenImage(OpenedFilePath);
-                ImageOperations.DisplayImage(ImageMatrix, pictureBox1);
+                MyImageMatrix = ImageOperations.OpenImage(OpenedFilePath);
+                ImageOperations.DisplayImage(MyImageMatrix, pictureBox1);
             }
-            txtWidth.Text = ImageOperations.GetWidth(ImageMatrix).ToString();
-            txtHeight.Text = ImageOperations.GetHeight(ImageMatrix).ToString();
+            txtWidth.Text = ImageOperations.GetWidth(MyImageMatrix).ToString();
+            txtHeight.Text = ImageOperations.GetHeight(MyImageMatrix).ToString();
         }
 
         private void pictureBox2_Click(object sender, EventArgs e)
         {
-
         }
 
         private void imgQuantization_Click(object sender, EventArgs e)
         {
-            ImageMatrix = ImageOperations.DistinctColors(ImageMatrix);
-            ImageOperations.DisplayImage(ImageMatrix, pictureBox2);
+            ImageOperations.DistinctColors(MyImageMatrix);
+            ImageOperations.DisplayImage(MyImageMatrix, pictureBox2);
         }
     }
 }
