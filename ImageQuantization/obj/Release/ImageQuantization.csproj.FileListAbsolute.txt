@@ -1,0 +1,4 @@
+C:\Users\Ahmed\Desktop\Algo\[1] Image Quantization\Startup Code\Image Quantization Startup Code\[TEMPLATE] ImageQuantization\ImageQuantization\obj\Release\ImageQuantization.MainForm.resources
+C:\Users\Ahmed\Desktop\Algo\[1] Image Quantization\Startup Code\Image Quantization Startup Code\[TEMPLATE] ImageQuantization\ImageQuantization\obj\Release\ImageQuantization.Properties.Resources.resources
+C:\Users\Ahmed\Desktop\Algo\[1] Image Quantization\Startup Code\Image Quantization Startup Code\[TEMPLATE] ImageQuantization\ImageQuantization\obj\Release\ImageQuantization.csproj.GenerateResource.Cache
+C:\Users\Ahmed\Desktop\Algo\[1] Image Quantization\Startup Code\Image Quantization Startup Code\[TEMPLATE] ImageQuantization\ImageQuantization\obj\Release\ImageQuantization.csprojResolveAssemblyReference.cache

@@ -137,8 +137,6 @@ namespace ImageQuantization
         /// <param name="PicBox">PictureBox object to display the image on it</param>
         public static void DisplayImage(RGBPixel[,] ImageMatrix, PictureBox PicBox)
         {
-            // Create Image:
-            //==============
             try
             {
                 int Height = ImageMatrix.GetLength(0);
@@ -180,7 +178,6 @@ namespace ImageQuantization
         /// </summary>
         private static bool[,,] Distinct;
         private static List<RGBPixel> UniqueColors;
-        private static AdjacencyList Graph;
         private static List<List<RGBPixel>> Clusters;
 
         /// <summary>
@@ -210,90 +207,81 @@ namespace ImageQuantization
                         }
                     }
                 }
-                CompleteGraph(UniqueColors, length);
+                MinimumSpanningTree(UniqueColors, length);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
             }
-            return;
         }
 
 
 
         /// <summary>
-        /// Construct the Minimum Spanning Tree
+        /// Construct the Minimum Spanning Tree for a given set of verticies
         /// </summary>
-        public static AdjacencyList CompleteGraph(List<RGBPixel> Verticies, long Number_of_verticies)
+        public static void MinimumSpanningTree(List<RGBPixel> Verticies, long Number_of_verticies)
         {
             try
             {
-                Distinct = new bool[256, 256, 256];
-                Graph = new AdjacencyList();
+                int[] Nodes = new int[Number_of_verticies];
+                double[] Cost = new double[Number_of_verticies];
+                bool[] Visited = new bool[Number_of_verticies];
+                double TreeCost = 0;
+
+                for (int v = 0; v < Number_of_verticies; v++)
+                {
+                    Cost[v] = 1e9;
+                    Visited[v] = false;
+                }
+
+                Cost[0] = 0;
+                Nodes[0] = 0;
+
                 for (int i = 0; i < Number_of_verticies; i++)
                 {
-                    RGBPixel V1 = Verticies[i];
-                    byte R1 = V1.red;
-                    byte G1 = V1.green;
-                    byte B1 = V1.blue;
-
-                    byte VisitedNodeR = 0;
-                    byte VisitedNodeG = 0;
-                    byte VisitedNodeB = 0;
-                    double Minimum_weight = 1000000000000;
+                    double MinimumCost = 1e9;
+                    int index = 0;
                     for (int j = 0; j < Number_of_verticies; j++)
                     {
-                        if(i == j)
+                        if (!Visited[j] && Cost[j] < MinimumCost)
                         {
-                            continue;
-                        }
-                        RGBPixel Tmp2 = Verticies[j];
-
-                        byte R2 = Tmp2.red;
-                        byte G2 = Tmp2.green;
-                        byte B2 = Tmp2.blue;
-
-                        double W1 = (R1 - R2) * (R1 - R2) + (B1 - B2) * (B1 - B2) + (G1 - G2) * (G1 - G2);
-                        W1 = Math.Sqrt(W1);
-                        if (Distinct[R2, G2, B2] == false)
-                        {
-                            if (W1 < Minimum_weight)
-                            {
-                                Minimum_weight = W1;
-                                VisitedNodeR = R2;
-                                VisitedNodeG = G2;
-                                VisitedNodeB = B2;
-                            }
+                            MinimumCost = Cost[j];
+                            index = j;
                         }
                     }
-                    RGBPixel V2 = new RGBPixel();
-                    V2.RGBPixelConstructor(VisitedNodeR, VisitedNodeG, VisitedNodeB);
-                    Graph.Add_Edge(V1, V2, Minimum_weight);
-                    Distinct[R1, G1, B1] = true;
-                    MessageBox.Show("[" + V1.red.ToString() + "," + V1.green.ToString() + "," + V1.blue.ToString() + "]" + "--" + Minimum_weight.ToString() + "-->" + "[" + V2.red.ToString() + "," + V2.green.ToString() + "," + V2.blue.ToString() + "]", "Edge Created ^_^*");
+
+                    Visited[index] = true;
+
+                    for (int v = 0; v < Number_of_verticies; v++)
+                    {
+                        int R1 = Verticies[v].red;
+                        int G1 = Verticies[v].green;
+                        int B1 = Verticies[v].blue;
+                        int R = Verticies[index].red - R1;
+                        int G = Verticies[index].green - G1;
+                        int B = Verticies[index].blue - B1;
+                        double EucledianDistance = Math.Sqrt(R * R + G * G + B * B);
+
+                        if (EucledianDistance > 0 && Visited[v] == false && EucledianDistance < Cost[v])
+                        {
+                            Nodes[v] = index;
+                            Cost[v] = EucledianDistance;
+                        }
+                    }
                 }
+
+                for (int v = 0; v < Number_of_verticies; v++)
+                {
+                    TreeCost += Cost[v];
+                }
+                MessageBox.Show("Tree Cost is : " + TreeCost.ToString());
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString());
+                MessageBox.Show("An Error Has Occured " + ex.Message.ToString());
             }
-            return Graph;
         }
 
-        /// <summary>
-        /// Find The K Clusters for a given minimum spanning tree
-        /// </summary>
-        public static List<List<RGBPixel>> KmeasnCluster(AdjacencyList MST,List<RGBPixel> Colors,int length, int k)
-        {
-            try
-            {
-                // here :"D 
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
-            return new List<List<RGBPixel>>();
-        }
     }
 }
